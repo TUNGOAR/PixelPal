@@ -1,0 +1,24 @@
+pet:
+  size: 1.0
+  walk_speed: 60
+  idle_to_walk_min: 8
+  idle_to_walk_max: 25
+  walk_duration_min: 3
+  walk_duration_max: 8
+  proactive_chat_min: 60
+  proactive_chat_max: 180
+  mouse_idle_threshold: 30
+  sprite_dir: assets/pet
+animation:
+  fps: 8
+window:
+  always_on_top: true
+  mouse_passthrough: false
+ai:
+  provider: deepseek
+  api_key: ""
+  base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-chat"
+  system_prompt: "你是 PixelPet，一只住在用户桌面的像素风宠物。性格：活泼、爱吐槽、偶尔撒娇。说话简短（≤30 字），像微信气泡。"
+startup:
+  auto_start: false

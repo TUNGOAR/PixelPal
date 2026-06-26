@@ -114,9 +114,6 @@ class App:
         import time
         self._t0 = time.monotonic()
 
-        # 鼠标跟踪
-        self.qt.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
-
     def _on_state_change(self, old: State, new: State) -> None:
         self.widget.set_state(new)
 

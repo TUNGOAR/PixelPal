@@ -13,7 +13,14 @@ class DeepSeekClient(LLMClient):
         self.api_key = api_key
         self.base_url = base_url
         self.model = model
-        self._client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self._client = None  # lazy
+
+    def _ensure_client(self):
+        if self._client is None:
+            if not self.api_key:
+                raise RuntimeError("DeepSeek API key 未配置，请在设置中填写")
+            self._client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self._client
 
     async def stream_chat(
         self,
@@ -23,8 +30,9 @@ class DeepSeekClient(LLMClient):
         on_error: Callable[[Exception], None],
     ) -> None:
         try:
+            client = self._ensure_client()  # may raise RuntimeError if no api_key
             payload = [{"role": m.role, "content": m.content} for m in messages]
-            stream = await self._client.chat.completions.create(
+            stream = await client.chat.completions.create(
                 model=self.model,
                 messages=payload,
                 stream=True,

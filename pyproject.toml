@@ -5,9 +5,10 @@ description = "Windows 桌面像素宠物"
 requires-python = ">=3.11"
 dependencies = [
     "PyQt6>=6.6",
-    "Pillow>=10.0",
     "PyYAML>=6.0",
+    "Pillow>=10.0",
     "openai>=1.0",
+    "qasync>=0.27",
 ]
 
 [project.optional-dependencies]

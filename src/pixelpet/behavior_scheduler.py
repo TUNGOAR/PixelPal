@@ -4,6 +4,8 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from pixelpet.state_machine import Event
+
 if TYPE_CHECKING:
     from pixelpet.state_machine import StateMachine
     from pixelpet.config_manager import ConfigManager
@@ -43,7 +45,7 @@ class BehaviorScheduler:
 
         # 1) 闲逛
         if self.sm.state.value == "idle" and now >= self._next_idle_walk_at:
-            if self.sm.transition(self._event_tick_idle()):
+            if self.sm.transition(Event.TICK_IDLE):
                 actions.append("walk")
                 self._next_idle_walk_at = self._random_idle_walk()
 
@@ -51,18 +53,9 @@ class BehaviorScheduler:
         if now >= self._next_proactive_at:
             idle_for = now - self._last_mouse_at
             if idle_for >= self._mouse_idle_threshold:
-                if self.sm.transition(self._event_submit()):
+                if self.sm.transition(Event.SUBMIT):
                     actions.append("proactive_chat")
             # 不管成不成功都重排下次时间，避免连续触发
             self._next_proactive_at = self._random_proactive()
 
         return actions
-
-    # ---- 避免在此文件 import 状态机的 Event（仅用于类型/解耦）
-    def _event_tick_idle(self):
-        from pixelpet.state_machine import Event
-        return Event.TICK_IDLE
-
-    def _event_submit(self):
-        from pixelpet.state_machine import Event
-        return Event.SUBMIT

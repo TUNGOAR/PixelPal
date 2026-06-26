@@ -10,6 +10,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer, QPoint, QRect
 from PyQt6.QtGui import QIcon, QPixmap, QImage, QPainter, QColor, QCursor
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
+import qasync
 
 from pixelpet.asset_loader import AssetLoader
 from pixelpet.state_machine import StateMachine, State, Event
@@ -54,7 +55,7 @@ def _build_llm(cfg: ConfigManager) -> LLMClient:
 
 class App:
     def __init__(self, minimized: bool = False):
-        self.qt = QApplication.instance() or QApplication(sys.argv)
+        self.qt = qasync.QApplication.instance() or qasync.QApplication(sys.argv)
         self.qt.setQuitOnLastWindowClosed(False)
 
         # 数据层

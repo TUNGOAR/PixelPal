@@ -57,6 +57,7 @@ class App:
     def __init__(self, minimized: bool = False):
         self.qt = qasync.QApplication.instance() or qasync.QApplication(sys.argv)
         self.qt.setQuitOnLastWindowClosed(False)
+        self.loop = qasync.QEventLoop(self.qt)
 
         # 数据层
         cfg_path = Path.home() / "AppData" / "Roaming" / "PixelPet" / "config.yaml"
@@ -130,7 +131,7 @@ class App:
         from PyQt6.QtWidgets import QInputDialog
         text, ok = QInputDialog.getText(self.window, "和宠物说", "你说：")
         if ok and text:
-            asyncio.create_task(self._do_chat(text))
+            self.loop.create_task(self._do_chat(text))
         else:
             self.bubble.hide()
             self.state.transition(Event.CANCEL)
@@ -220,7 +221,7 @@ class App:
                 on_token, on_done, on_error,
             )
 
-        asyncio.create_task(go())
+        self.loop.create_task(go())
 
     def _open_settings(self) -> None:
         if self.settings_dialog is None:
@@ -260,4 +261,6 @@ class App:
         return monotonic_ns()
 
     def run(self) -> int:
-        return self.qt.exec()
+        # qasync：必须用 QEventLoop.run_forever() 才能让 asyncio loop 一起运行
+        with self.loop:
+            return self.loop.run_forever() or 0

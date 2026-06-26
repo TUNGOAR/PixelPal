@@ -29,6 +29,15 @@ def test_click_stays_in_click_short_then_returns():
     # 不主动回退；调用方需负责
 
 
+def test_click_done_returns_to_previous():
+    sm = StateMachine()
+    sm.transition(Event.TICK_IDLE)  # IDLE -> WALK
+    sm.transition(Event.CLICK)      # -> CLICK
+    assert sm.transition(Event.CLICK_DONE) is True
+    assert sm.state == State.WALK
+    assert sm.previous_state is None
+
+
 def test_chat_to_think_to_chat():
     sm = StateMachine()
     sm.transition(Event.SUBMIT)  # IDLE -> CHAT

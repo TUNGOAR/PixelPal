@@ -17,6 +17,7 @@ class Event(str, Enum):
     TICK_IDLE = "tick_idle"     # 闲逛计时到期
     TICK_WALK = "tick_walk"     # 行走时长到
     CLICK = "click"             # 鼠标点击
+    CLICK_DONE = "click_done"   # CLICK 0.5s 自动结束
     SUBMIT = "submit"           # 用户提交输入
     CANCEL = "cancel"           # 用户取消
     TOKEN_START = "token_start" # LLM 开始流式返回
@@ -71,12 +72,7 @@ class StateMachine:
         return self._previous
 
     def transition(self, event: Event) -> bool:
-        mapping = _TRANSITIONS.get(self._state, {})
-        target = mapping.get(event)
-        if target is None and self._state != State.CLICK:
-            return False
-
-        # CLICK 状态：任何非 HIDE 事件 = 回到 previous_state
+        # CLICK 状态：CLICK_DONE 显式事件 或 任何非 HIDE 事件 = 回到 previous_state
         if self._state == State.CLICK and event != Event.HIDE:
             back = self._previous or State.IDLE
             old = self._state
@@ -85,6 +81,8 @@ class StateMachine:
             self._fire(old, back)
             return True
 
+        mapping = _TRANSITIONS.get(self._state, {})
+        target = mapping.get(event)
         if target is None:
             return False
 

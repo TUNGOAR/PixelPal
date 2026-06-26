@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import random
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer, QPoint
+from PyQt6.QtCore import Qt, QTimer, QPoint, QRect
 from PyQt6.QtGui import QIcon, QPixmap, QImage, QPainter, QColor, QCursor
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
@@ -99,8 +100,8 @@ class App:
         self.tray.request_settings.connect(self._open_settings)
         self.tray.request_quit.connect(self._quit)
 
-        # 启动位置：主屏右下角
-        screen = self.qt.primaryScreen().availableGeometry()
+        # 启动位置：所有屏幕联合区域的右下角
+        screen = self._all_screens_union()
         self.window.move(screen.right() - self.widget.width() - 50,
                          screen.bottom() - self.widget.height() - 50)
         if not minimized:
@@ -120,6 +121,8 @@ class App:
     def _on_pet_clicked(self) -> None:
         # CLICK 短反馈 + 弹出输入
         self.state.transition(Event.CLICK)
+        # 0.5s 后自动回到原状态（即使后续 QInputDialog 阻塞）
+        QTimer.singleShot(500, lambda: self.state.transition(Event.CLICK_DONE))
         self.bubble.set_text("…")
         self.bubble.show_at(self.window.pos(), self.widget.size())
         # 用 input() 在控制台不便；改为弹出 QInputDialog
@@ -164,21 +167,35 @@ class App:
             self._proactive_chat()
 
     def _start_walk(self) -> None:
-        screen = self.qt.primaryScreen().availableGeometry()
-        target_x = self.window.x() + (50 if (self._now_ns() % 2) else -50)
-        target_y = self.window.y() + (30 if (self._now_ns() % 3) else -30)
+        screen = self._all_screens_union()
+        # 随机方向 + 目标位移
+        direction = random.choice(["down", "up", "left", "right"])
+        self.widget.set_direction(direction)
+        if direction == "right":
+            dx, dy = random.randint(30, 50), random.randint(-20, 20)
+        elif direction == "left":
+            dx, dy = random.randint(-50, -30), random.randint(-20, 20)
+        elif direction == "down":
+            dx, dy = random.randint(-20, 20), random.randint(30, 50)
+        else:  # up
+            dx, dy = random.randint(-20, 20), random.randint(-50, -30)
+        target_x = self.window.x() + dx
+        target_y = self.window.y() + dy
         target_x = max(screen.left(), min(screen.right() - self.widget.width(), target_x))
         target_y = max(screen.top(), min(screen.bottom() - self.widget.height(), target_y))
 
-        speed = float(self.config.get("pet", "walk_speed", 60))
+        walk_min = float(self.config.get("pet", "walk_duration_min", 3))
+        walk_max = float(self.config.get("pet", "walk_duration_max", 8))
+        duration_ms = int(1000 * random.uniform(walk_min, walk_max))
+
         from PyQt6.QtCore import QPropertyAnimation, QEasingCurve
         self._anim = QPropertyAnimation(self.window, b"pos")
-        self._anim.setDuration(max(100, int(1000 * 1.0)))
+        self._anim.setDuration(max(100, duration_ms))
         self._anim.setStartValue(self.window.pos())
         self._anim.setEndValue(QPoint(target_x, target_y))
         self._anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
         self._anim.start()
-        QTimer.singleShot(1000, lambda: self.state.transition(Event.TICK_WALK))
+        QTimer.singleShot(duration_ms, lambda: self.state.transition(Event.TICK_WALK))
 
     def _proactive_chat(self) -> None:
         async def go():
@@ -209,6 +226,7 @@ class App:
             self.settings_dialog = SettingsDialog(
                 self.config, auto_start=self.auto_start,
                 exe_path=Path(sys.executable),
+                is_frozen=getattr(sys, "frozen", False),
             )
             self.settings_dialog.applied.connect(self._on_settings_applied)
         self.settings_dialog.show()
@@ -218,6 +236,8 @@ class App:
         # 热生效：刷新 widget 参数
         self.widget.set_size_scale(float(self.config.get("pet", "size", 1.0)))
         self.widget.set_fps(int(self.config.get("animation", "fps", 8)))
+        # 同步窗口尺寸以匹配新的 widget 大小（点击热区跟随缩放）
+        self.window.resize(self.widget.size())
         # 重建 LLM（API 配置可能变了）
         self.llm = _build_llm(self.config)
         self.chat.llm = self.llm
@@ -225,6 +245,13 @@ class App:
 
     def _quit(self) -> None:
         self.qt.quit()
+
+    def _all_screens_union(self) -> QRect:
+        """所有屏幕 availableGeometry 的并集，用于多屏边界计算。"""
+        union = QRect()
+        for screen in self.qt.screens():
+            union = union.united(screen.availableGeometry())
+        return union
 
     @staticmethod
     def _now_ns() -> int:

@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QDialog, QTabWidget, QWidget, QVBoxLayout, QFormLayout, QLineEdit,
     QSpinBox, QDoubleSpinBox, QCheckBox, QPushButton, QHBoxLayout, QFileDialog,
-    QComboBox, QDialogButtonBox, QPlainTextEdit,
+    QComboBox, QDialogButtonBox, QPlainTextEdit, QMessageBox,
 )
 
 from pixelpet.i18n import SETTINGS_TITLE, SETTINGS_TAB_GENERAL, SETTINGS_TAB_BEHAVIOR, SETTINGS_TAB_AI
@@ -18,12 +18,13 @@ from pixelpet.config_manager import ConfigManager
 class SettingsDialog(QDialog):
     applied = pyqtSignal(dict)
 
-    def __init__(self, config: ConfigManager, auto_start=None, exe_path: Path | None = None, parent=None):
+    def __init__(self, config: ConfigManager, auto_start=None, exe_path: Path | None = None, is_frozen: bool = True, parent=None):
         super().__init__(parent)
         self.setWindowTitle(SETTINGS_TITLE)
         self.config = config
         self.auto_start = auto_start
         self.exe_path = exe_path
+        self.is_frozen = is_frozen
 
         tabs = QTabWidget()
         tabs.addTab(self._build_general_tab(), SETTINGS_TAB_GENERAL)
@@ -144,6 +145,16 @@ class SettingsDialog(QDialog):
 
     # ----- Apply -----
     def _on_ok(self) -> None:
+        # 校验：最小值不能大于最大值
+        if self.spin_idle_min.value() > self.spin_idle_max.value():
+            QMessageBox.warning(self, SETTINGS_TITLE, "最小值不能大于最大值（待机→行走）")
+            return
+        if self.spin_walk_min.value() > self.spin_walk_max.value():
+            QMessageBox.warning(self, SETTINGS_TITLE, "最小值不能大于最大值（行走时长）")
+            return
+        if self.spin_pro_min.value() > self.spin_pro_max.value():
+            QMessageBox.warning(self, SETTINGS_TITLE, "最小值不能大于最大值（搭讪间隔）")
+            return
         new_cfg = {
             "startup": {"auto_start": self.chk_auto_start.isChecked()},
             "pet": {
@@ -173,7 +184,17 @@ class SettingsDialog(QDialog):
         # 开机自启
         if self.auto_start is not None and self.exe_path is not None:
             if new_cfg["startup"]["auto_start"]:
-                self.auto_start.enable(self.exe_path)
+                if not self.is_frozen:
+                    # 开发模式下 sys.executable 是 python.exe，写入注册表后无法正常运行
+                    QMessageBox.warning(
+                        self, SETTINGS_TITLE,
+                        "开发模式下不支持开机自启，请先打包后再启用。"
+                    )
+                    new_cfg["startup"]["auto_start"] = False
+                    self.config.set("startup", "auto_start", False)
+                    self.chk_auto_start.setChecked(False)
+                else:
+                    self.auto_start.enable(self.exe_path)
             else:
                 self.auto_start.disable()
         self.applied.emit(new_cfg)

@@ -1,3 +1,20 @@
 # PixelPet SDD Progress Ledger
 
-branch base: none
+branch base: 7ca1866
+- Task 1: complete (commits 7ca1866..7f3a7c6, review clean)
+- Task 2: complete (commits 7f3a7c6..5ebd8ef, review clean; conftest qapp fixture accepted as justified infra)
+- Task 3: complete (commits 5ebd8ef..10dba5b, review clean)
+- Task 4: complete (commits 10dba5b..3ec8c8f, review clean)
+- Task 5: complete (commits 3ec8c8f..ae99dda, review clean)
+- Task 6: complete (commits ae99dda..1527fe3, review clean; interface only)
+- Task 7: complete (commits 1527fe3..98c1ab1, review clean; test placement fix accepted)
+- Task 8: complete (commits 98c1ab1..ad2ce90, review clean)
+- Task 9: complete (commits ad2ce90..8c0ffac, review clean)
+- Task 10: complete (commits 8c0ffac..32d567c, review clean; UI widget no tests)
+- Task 11: complete (commits 32d567c..5c22740, review clean; UI widget no tests)
+- Task 12: complete (commits 5c22740..6d4402f, review clean; if False dead code fixed)
+- Task 13: complete (commits 6d4402f..ef48ef2, review clean; brief interface/code mismatch accepted, signal unused)
+- Task 14: complete (commits ef48ef2..87fbe27, review clean; brief-level i18n hardcode + line length, follow-up)
+- Task 15: complete (commits 87fbe27..b568d2f, review clean; PyQt5 attr removed + DeepSeekClient lazy)
+- Task 16: complete (commits b568d2f..744ecf8, review clean; spec only, PyInstaller exec deferred)
+- Final review + fix: complete (commits 744ecf8..8bc9afb; 8 Critical/Important issues fixed; 27/27 tests pass)

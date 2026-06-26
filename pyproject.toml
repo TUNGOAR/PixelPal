@@ -1,0 +1,25 @@
+[project]
+name = "pixelpet"
+version = "0.1.0"
+description = "Windows 桌面像素宠物"
+requires-python = ">=3.11"
+dependencies = [
+    "PyQt6>=6.6",
+    "Pillow>=10.0",
+    "PyYAML>=6.0",
+    "openai>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-qt>=4.2",
+    "pytest-asyncio>=0.23",
+]
+build = [
+    "pyinstaller>=6.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -99,6 +99,7 @@ class App:
         self.window.clicked.connect(self._on_pet_clicked)
         self.tray.request_hide.connect(self.window.hide)
         self.tray.request_show.connect(self.window.show)
+        self.tray.request_proactive_now.connect(self._proactive_chat)
         self.tray.request_settings.connect(self._open_settings)
         self.tray.request_quit.connect(self._quit)
 
